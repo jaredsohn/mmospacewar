@@ -1,0 +1,83 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Spacewar MMO</title>
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css" href="spacewar.css">
+    <script src="http://static.firebase.com/v0/firebase.js"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script src="http://platform.twitter.com/anywhere.js?id=JOjEuFiGBwyKCbyyYdHHRg&v=1" type="text/javascript"></script>
+    <script src="ipad.js"></script>
+    <script src="mmoac.js"></script>
+    <script src="http://mmoax.firebase.com/mmoac.json?callback=ummoac"></script>
+    <script src="vector_battle_regular.typeface.js"></script>
+    <script src="game.js"></script>
+    <base target="_blank">
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-30760702-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+
+  </head>
+  <body>
+    <div id="asteroids">
+      <div id="header-pane">
+        <div id="header-left">
+        <span>Multiplayer Spacewar In The Browser! ⬅ ⬆ ➡ [space] z</span>
+  </div>
+  <div id="header-right">
+  Energy: <span id="my-energy"></span>  
+  <span id="my-name"></span>: <span id="my-score"></span>
+  <span id="login"></span>
+  </div>
+        <!--a href="https://twitter.com/share" class="twitter-share-button" data-text="MMO Asteroids" data-via="mmoasteroids" data-hashtags="WAT">Tweet</a><script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script-->
+      </div>
+      <div id="game-pane">
+        <div id="game-container">
+          <div id="left-controls">
+            <div id="up" class='button'>⬆</div>
+            <div id="left" class='button'>⬅</div>
+            <div id="right" class='button'>➡</div>
+          </div>
+          <div id="right-controls">
+            <div id="space" class='button'>Fire</div>
+          </div>
+          <canvas id="canvas" width="1000" height="700"></canvas>
+        </div>
+      </div>
+      <div id="footer-pane">
+         <div id="footer-col">
+   <h3>What is this?</h3>
+   <ul>
+   <li>A modification of <a href="http://www.mmoasteroids.com">MMO Asteroids</a> (an actual MMO <a href="https://github.com/dmcinnes/HTML5-Asteroids">Asteroids</a> without the April Fools' joke, made possible thanks to a <a href="http://www.firebase.com/">super awesome API</a>) to make the rules more like the <a href="http://www.youtube.com/watch?v=yY5qHe2VadA">DOS version of Spacewar.</a>  We stand on the shoulders of giants...
+   <li>You can now warp (by pressing 'z').
+   <li>You don't die right after getting shot.  Instead you have energy (shown in the upper right next to your score.)
+   <li>It costs energy to use thrust, warp, or if you collide with a bullet or other ships.  You gain back energy slowly over time.
+   <li>Your opponents' ships become more red as their energy decreases.
+   <li>Once you die, you're done (and can see your score in the scoreboard).<br>
+   <li>At the moment, you are playing in the same world as the MMO Asteroids people and are sharing their scoreboard.  Be nice.
+   </ul>
+   </div>
+         <div id="footer-col">
+  <h3>Leaderboard</h3>
+        <table id="leaderboardTable"></table>
+   </div>
+         <div id="footer-col">
+   <h3>Powered By</h3>
+  <a href="http://www.firebase.com/"><img src="firebase.png"></a><br>
+  <a href="http://www.firebase.com/">Go to Firebase &#187;</a>
+   </div>
+      </div>
+    </div>
+  </body>
+</html>
