@@ -2,3 +2,6 @@ MMO Spacewar
 http://www.mmospacewar.com/
 
 A fork of mmoasteroids.com to make it behave more like the DOS version of Spacewar.
+
+New features: warp (press 'z') and instead of instant death you have an energy which gets depleted by using thrust, colliding with other ships/bullets, and warping.
+
