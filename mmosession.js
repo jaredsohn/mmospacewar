@@ -1,7 +1,7 @@
 // This library can be used to manage sessions in multiplayer HTML5 games
 //
 // At the moment, it assumes that you are using Firebase, although that could easily get abstracted away.
-//
+
 
 // Goal #1: just allow specifying the session name via the URL
 
