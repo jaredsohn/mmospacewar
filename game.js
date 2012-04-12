@@ -62,17 +62,23 @@ $(window).keydown(function (e) {
 
 GRID_SIZE = 60;
 
-var server = 'http://mmoa' + (Math.floor(Math.random() * 1000) % mmoac.s) + '.firebase.com/';
-var namespace = Math.floor(Math.random() * 1000) % mmoac.n;
-var frefA = server + 'asteroids' + namespace;
-var frefL = server + 'mmoaleaderboard' + namespace;
+var server = 'http://gamma.firebase.com/spacewar/';
+
+var namespace = Math.floor(Math.random() * mmoac.n) + 0;
+var frefA = server + 'space' + namespace;
+//TODO var frefA2 = server + 'space_' + MmoSession.Name;
+
+var frefL = server + 'leaderboard';
+var frefGL = server + 'gamelist';
+
+console.log(frefA);
+
 var asteroids = new Firebase(frefA);
 var myship = asteroids.child('players').push();
 myship.removeOnDisconnect();
 
 // Leaderboard start
 var LEADERBOARD_SIZE = 25;
-// Should the leaderboard be global? Move it to delta?
 var leaderboard = new Firebase(frefL);
 var scoreListRef = leaderboard.child('scoreList');
 var htmlForPath = {};
@@ -1058,7 +1064,7 @@ Game = {
       }
 
       setScore(0);
-      Game.lives = 1; // setting it directly due to caching issues.  should be: mmoac.l;
+      Game.lives = mmoac.l; 
 
       this.state = 'spawn_ship';
     },
