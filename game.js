@@ -1,6 +1,3 @@
-//TODO: add back leveling???
-//TODO: add key bindings for alien, asteroids; send data about them to firebase
-
 /*
 
    Copyright (c) 2010 Doug McInnes
@@ -25,6 +22,10 @@
 
 */
 
+// Updated to allow multiple players and renamed MMOAsteroids by @vikrum5000 of Firebase.
+// Made more Spacewar (DOS)-like, uses MMOSession for choosing an instance, and many bugs fixed by Jared Sohn (http://www.jaredsohn.com)
+
+
 var ENERGY_FULL = 100;
 var ENERGY_SHOOT = 1;
 var ENERGY_WARP = 5;
@@ -32,17 +33,13 @@ var ENERGY_THRUST = 1;
 var ENERGY_COLLISION = 10;
 var ENERGY_REGEN = 1;
 
-// TODO: have bullets use up energy, too???
-
 KEY_CODES = {
-  32: 'space',
-  37: 'left',
-  38: 'up',
-  39: 'right',
-  40: 'down',
-  71: 'g',
-  72: 'h',
-  77: 'm',
+  32: 'space', // shoot
+  37: 'left',  // rotate
+  38: 'up',    // thrust
+  39: 'right', // rotate
+  71: 'g', // shows which objects are on the screen. Useful for debugging.
+  77: 'm', // toggle sound
   79: 'o', // spawn an asteroid
   80: 'p', // spawn alien now
   81: 'q', // instant death
@@ -560,23 +557,6 @@ Ship = function () {
       this.vel.rot = 0;
     }
 
-    if (KEY_STATUS.q)
-    {
-      Game.FSM.state = 'player_died';
-      Game.ship.visible = false;
-      Game.lives--;
-      //this.currentNode.leave(this);
-      //this.currentNode = null;
-    }
-    if (KEY_STATUS.w) // clear all asteroids and big aliens
-    {
-      for (sprite in Game.sprites) {
-        if ((Game.sprites[sprite].name == 'asteroid') || (Game.sprites[sprite].name == 'bigalien')) {
-          Game.sprites[sprite].die();
-        }
-      }
-    }
-
     if (KEY_STATUS.up) {
       if (this.energy > ENERGY_THRUST)
       {
@@ -594,6 +574,39 @@ Ship = function () {
       this.acc.y = 0;
       this.children.exhaust.visible = false;
     }
+    
+    if (KEY_STATUS.m) {
+        KEY_STATUS.m = false;
+        SFX.muted = !SFX.muted;
+    }
+
+    if (KEY_STATUS.o) {
+        KEY_STATUS.o = false;
+        Game.spawnAsteroids(1);
+    }
+
+    if (KEY_STATUS.p) {
+        KEY_STATUS.p = false;       
+        Game.addBigAlien();
+    }
+
+    if (KEY_STATUS.q)
+    {
+      Game.FSM.state = 'player_died';
+      Game.ship.visible = false;
+      Game.lives--;
+      //this.currentNode.leave(this);
+      //this.currentNode = null;
+    }
+
+    if (KEY_STATUS.w) // clear all asteroids and big aliens
+    {
+      for (sprite in Game.sprites) {
+        if ((Game.sprites[sprite].name == 'asteroid') || (Game.sprites[sprite].name == 'bigalien')) {
+          Game.sprites[sprite].die();
+        }
+      }
+    }
 
     if (KEY_STATUS.z) { // warp
       if (this.energy > ENERGY_WARP)
@@ -606,20 +619,6 @@ Ship = function () {
         this.prevenergy = this.energy;
         updateEnergy();
       }
-    }
-
-    if (this.bulletCounter > 0) {
-      this.bulletCounter -= delta;
-    }
-    if (KEY_STATUS.o) {
-        KEY_STATUS.o = false;
-        Game.spawnAsteroids(1);
-    }
-
-    if (KEY_STATUS.p) {
-        KEY_STATUS.p = false;       
-        Game.addBigAlien();
-//        Game.nextBigAlienTime = Date.now()
     }
 
     if (KEY_STATUS.space) {
@@ -653,6 +652,12 @@ Ship = function () {
           }
         }
       }
+    }
+
+
+
+    if (this.bulletCounter > 0) {
+      this.bulletCounter -= delta;
     }
 
     // limit the ship's speed
@@ -1148,10 +1153,6 @@ BigAlien = function () {
     if (other.name == "bullet") Game.score += 200;
     SFX.explosion().play();
     Game.explosionAt(other.x, other.y);
-    //this.visible = false;
-    //this.newPosition();
-    //TODO: actually remove it instead of just making it hidden
-
     this.die();
     Game.bigAlienCount--;
   };
@@ -1391,8 +1392,8 @@ Game = {
     },
     run: function () {
           if (Date.now() > Game.nextBigAlienTime) {
-            // Uncomment whole block if we want to allow multiple aliens
-            /* //if (Game.bigAlienCount == 0) //Uncomment if  If we want to allow only one at a time
+            // Uncomment whole block if we want to allow multiple aliens being automatically generated
+            /* //if (Game.bigAlienCount == 0) //Uncomment if we want to allow only one at a time
             {
               Game.addBigAlien();
             } */
@@ -1620,14 +1621,6 @@ $(function () {
 
   mainLoop();
 
-  $(window).keydown(function (e) {
-    switch (KEY_CODES[e.keyCode]) {
-      case 'm': // mute
-        SFX.muted = !SFX.muted;
-        break;
-    }
-  });
-
   asteroids.child('players').on('child_added', function(snapshot) {
     if(snapshot.name() != myship.name()) {
   var enemy = new EnemyShip();
@@ -1721,9 +1714,4 @@ $(function () {
   delete Game.sprites['bullet:' + snapshot.name()];
      }
   });
-
-
-
 });
-
-// vim: fdl=0
