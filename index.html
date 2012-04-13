@@ -9,6 +9,7 @@
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
     <script src="http://platform.twitter.com/anywhere.js?id=JOjEuFiGBwyKCbyyYdHHRg&v=1" type="text/javascript"></script>
     <script src="ipad.js"></script>
+    <script src="mmosession.js"></script>
     <script src="mmoac.js"></script>
     <script src="vector_battle_regular.typeface.js"></script>
     <script src="game.js"></script>
@@ -32,7 +33,7 @@
     <div id="asteroids">
       <div id="header-pane">
         <div id="header-left">
-        <span>Multiplayer Spacewar In The Browser! ⬅ ⬆ ➡ [space] z</span>
+        <span>Multiplayer Spacewar In The Browser! ⬅ ⬆ ➡ [space] z m q</span>
   </div>
   <div id="header-right">
   Energy: <span id="my-energy"></span>  
@@ -60,10 +61,15 @@
    <ul>
    <li>A modification of <a href="http://www.mmoasteroids.com">MMO Asteroids</a> (an actual MMO <a href="https://github.com/dmcinnes/HTML5-Asteroids">Asteroids</a> without the April Fools' joke, made possible thanks to a <a href="http://www.firebase.com/">super awesome API</a>) to make the rules more like the <a href="http://www.youtube.com/watch?v=yY5qHe2VadA">DOS version of Spacewar.</a>  We stand on the shoulders of giants...
    <li>You can now warp (by pressing 'z').
+   <li>So good that nobody can kill you?  Then do it yourself to lock in your high score (press 'q').
+   <li>Sound now works! (disabled by default).  Press 'm' to toggle.
    <li>You don't die right after getting shot.  Instead you have energy (shown in the upper right next to your score.)
-   <li>It costs energy to use thrust, warp, or if you collide with a bullet or other ships.  You gain back energy slowly over time.
+   <li>It costs energy to shoot, use thrust, warp, or if you collide with a bullet or other ships.  You gain back energy slowly over time.
    <li>Your opponents' ships become more red as their energy decreases.
-   <li>Once you die, you're done (and can see your score in the scoreboard).<br>
+   <li>Once you die, you're done (and can see your score in the scoreboard).  You only get one life.<br>
+   <li>Ships now respawn at a random spot (instead of the top-left corner.)  You must now press a key before respawning.  No more camping. :)
+   <li>You can specify an instance by adding '#[instancename]' at the end of the URL.  At the moment everyone gets thrown into the same instance automatically; balancing and listing instances to be added soon.  Some other instance urls: <a href="http://www.mmospacewar.com/#game1">Game 1</a> <a href="http://www.mmospacewar.com/#game2">Game 2</a> <a href="http://www.mmospacewar.com/#game3">Game 3</a> <a href="http://www.mmospacewar.com/#game4">Game 4</a>. All instances share a scoreboard.
+   <li>Yes, you can cheat, but please don't or if you, do it in your own instance.
    </ul>
    </div>
          <div id="footer-col">

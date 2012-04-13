@@ -1,4 +1,4 @@
-var mmoac = { n: 2, l: 1 };
+var mmoac = { n: 2, l: 0 };
 
 function ummoac(c) {
  if(typeof(c) != undefined && c != null) {

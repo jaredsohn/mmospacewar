@@ -1,3 +1,6 @@
+//TODO: add back leveling???
+//TODO: add key bindings for alien, asteroids; send data about them to firebase
+
 /*
 
    Copyright (c) 2010 Doug McInnes
@@ -23,10 +26,12 @@
 */
 
 var ENERGY_FULL = 100;
+var ENERGY_SHOOT = 1;
 var ENERGY_WARP = 5;
 var ENERGY_THRUST = 1;
 var ENERGY_COLLISION = 10;
 var ENERGY_REGEN = 1;
+
 // TODO: have bullets use up energy, too???
 
 KEY_CODES = {
@@ -38,7 +43,11 @@ KEY_CODES = {
   71: 'g',
   72: 'h',
   77: 'm',
-  90: 'z'
+  79: 'o', // spawn an asteroid
+  80: 'p', // spawn alien now
+  81: 'q', // instant death
+  87: 'w', // instant death to all asteroids
+  90: 'z', // warp
 }
 
 KEY_STATUS = { keyDown:false };
@@ -47,6 +56,11 @@ for (code in KEY_CODES) {
 }
 
 $(window).keydown(function (e) {
+  if (Game.FSM.state == 'boot')
+  {
+    Game.FSM.state = 'start';
+  }
+
   KEY_STATUS.keyDown = true;
   if (KEY_CODES[e.keyCode]) {
     e.preventDefault();
@@ -64,8 +78,8 @@ GRID_SIZE = 60;
 
 var server = 'http://gamma.firebase.com/spacewar/';
 
-var namespace = Math.floor(Math.random() * mmoac.n) + 0;
-var frefA = server + 'space' + namespace;
+var namespace = mmoSession.Name;
+var frefA = server + namespace;
 //TODO var frefA2 = server + 'space_' + MmoSession.Name;
 
 var frefL = server + 'leaderboard';
@@ -255,7 +269,7 @@ Sprite = function () {
 
   this.preMove  = null;
   this.postMove = null;
-  this.strokeStyle = "#000000";
+  this.strokeStyle = "#ffffff";
 
   this.run = function(delta) {
 
@@ -526,13 +540,14 @@ Ship = function () {
                                3,  6]);
 
   this.energy = ENERGY_FULL;
+  this.prevenergy = this.energy;
   this.bulletCounter = 0;
   this.strokeStyle = "#ffff00";
   this.keyFrame = 0;
 
   this.postMove = this.wrapPostMove;
 
-  this.collidesWith = ["enemybullet", "enemyship"];
+  this.collidesWith = ["enemybullet", "enemyship", "asteroid", "bigalien", "alienbullet"];
 
   this.previousKeyFrame = { vel: { rot: 0 }, accb: false };
 
@@ -545,6 +560,23 @@ Ship = function () {
       this.vel.rot = 0;
     }
 
+    if (KEY_STATUS.q)
+    {
+      Game.FSM.state = 'player_died';
+      Game.ship.visible = false;
+      Game.lives--;
+      //this.currentNode.leave(this);
+      //this.currentNode = null;
+    }
+    if (KEY_STATUS.w) // clear all asteroids and big aliens
+    {
+      for (sprite in Game.sprites) {
+        if ((Game.sprites[sprite].name == 'asteroid') || (Game.sprites[sprite].name == 'bigalien')) {
+          Game.sprites[sprite].die();
+        }
+      }
+    }
+
     if (KEY_STATUS.up) {
       if (this.energy > ENERGY_THRUST)
       {
@@ -553,6 +585,9 @@ Ship = function () {
         this.acc.y = 0.5 * Math.sin(rad);
         this.children.exhaust.visible = Math.random() > 0.1;
         this.energy -= ENERGY_THRUST;
+        myship.set({ship: {acc: this.acc, vel: this.vel, x: this.x, y: this.y, rot: this.rot, accb: KEY_STATUS.up, energy: this.energy }, user: currentUser  });
+        this.prevenergy = this.energy;
+        updateEnergy();
       }
     } else {
       this.acc.x = 0;
@@ -568,6 +603,7 @@ Ship = function () {
         this.y = Math.floor(Game.canvasHeight * Math.random());
         this.energy -= ENERGY_WARP;
         myship.set({ship: {acc: this.acc, vel: this.vel, x: this.x, y: this.y, rot: this.rot, accb: KEY_STATUS.up, energy: this.energy }, user: currentUser  });
+        this.prevenergy = this.energy;
         updateEnergy();
       }
     }
@@ -575,24 +611,44 @@ Ship = function () {
     if (this.bulletCounter > 0) {
       this.bulletCounter -= delta;
     }
+    if (KEY_STATUS.o) {
+        KEY_STATUS.o = false;
+        Game.spawnAsteroids(1);
+    }
+
+    if (KEY_STATUS.p) {
+        KEY_STATUS.p = false;       
+        Game.addBigAlien();
+//        Game.nextBigAlienTime = Date.now()
+    }
+
     if (KEY_STATUS.space) {
       if (this.bulletCounter <= 0) {
         this.bulletCounter = 10;
         for (var i = 0; i < this.bullets.length; i++) {
           if (!this.bullets[i].visible) {
-            SFX.laser();
-            var bullet = this.bullets[i];
-            var rad = ((this.rot-90) * Math.PI)/180;
-            var vectorx = Math.cos(rad);
-            var vectory = Math.sin(rad);
-            // move to the nose of the ship
-            bullet.x = this.x + vectorx * 4;
-            bullet.y = this.y + vectory * 4;
-            bullet.vel.x = 6 * vectorx + this.vel.x;
-            bullet.vel.y = 6 * vectory + this.vel.y;
-            bullet.visible = true;
-      bullet.fref = asteroids.child('bullets').push({s: myship.name(), x: bullet.x, y: bullet.y, vel: bullet.vel});
-      bullet.fref.removeOnDisconnect();
+
+            if (this.energy > ENERGY_SHOOT)
+            {
+              this.energy -= ENERGY_SHOOT;
+              myship.set({ship: {acc: this.acc, vel: this.vel, x: this.x, y: this.y, rot: this.rot, accb: KEY_STATUS.up, energy: this.energy }, user: currentUser  });
+              this.prevenergy = this.energy;
+              updateEnergy();
+
+              SFX.laser().play();
+              var bullet = this.bullets[i];
+              var rad = ((this.rot-90) * Math.PI)/180;
+              var vectorx = Math.cos(rad);
+              var vectory = Math.sin(rad);
+              // move to the nose of the ship
+              bullet.x = this.x + vectorx * 4;
+              bullet.y = this.y + vectory * 4;
+              bullet.vel.x = 6 * vectorx + this.vel.x;
+              bullet.vel.y = 6 * vectory + this.vel.y;
+              bullet.visible = true;
+              bullet.fref = asteroids.child('bullets').push({s: myship.name(), x: bullet.x, y: bullet.y, vel: bullet.vel});
+              bullet.fref.removeOnDisconnect();
+            }
             break;
           }
         }
@@ -607,6 +663,7 @@ Ship = function () {
 
     if((this.vel.rot != this.previousKeyFrame.vel.rot) || (KEY_STATUS.up != this.previousKeyFrame.accb)) {
       myship.set({ship: {acc: this.acc, vel: this.vel, x: this.x, y: this.y, rot: this.rot, accb: KEY_STATUS.up, energy: this.energy }, user: currentUser  });
+      myship.prevenergy = this.energy;
       updateEnergy();
     }
     this.previousKeyFrame = { vel: { rot: this.vel.rot }, accb: KEY_STATUS.up };
@@ -614,21 +671,29 @@ Ship = function () {
     this.keyFrame++;
     if(this.keyFrame % 60 == 0) {
       myship.set({ship: {acc: this.acc, vel: this.vel, x: this.x, y: this.y, rot: this.rot, accb: KEY_STATUS.up, energy: this.energy }, user: currentUser  });
+      myship.prevenergy = myship.energy;
       updateEnergy();
     }
   };
 
   this.collision = function (other) {
+//    console.log("I've been hit!");
+
     this.energy -= ENERGY_COLLISION;
+    updateEnergy();
+    myship.set({ship: {acc: this.acc, vel: this.vel, x: this.x, y: this.y, rot: this.rot, accb: KEY_STATUS.up, energy: this.energy }, user: currentUser  });
+
+    SFX.explosion().play();
+    if(other != null) {
+      Game.explosionAt(other.x, other.y);
+    }
+    else {
+      Game.explosionAt(Game.ship.x, Game.ship.y);
+    }
+
     if (this.energy <= 0)
     {
-      SFX.explosion();
-      if(other != null) {
-        Game.explosionAt(other.x, other.y);
-      }
-      else {
-        Game.explosionAt(Game.ship.x, Game.ship.y);
-      }
+//      console.log("death!");
       Game.FSM.state = 'player_died';
       this.visible = false;
       this.currentNode.leave(this);
@@ -669,19 +734,25 @@ EnemyShip = function () {
   this.bulletCounter = 0;
   if (typeof(this.energy) == 'undefined')
     this.energy = 1;
-  // the color should fade from white to red as the energy decreases
-  var gbComponent = (parseInt(65535 * this.energy / ENERGY_FULL)).toString(16);
-  gbComponent = gbComponent.slice(0,-1); // remove trailing f
-  if (gbComponent.length < 2)
-    gbComponent = Array(2 - gbComponent.length + 1).join("0") + gbComponent;
 
-//  if (gbComponent == '0')
-//    gbComponent = '00';
-  this.strokeStyle = '#ff' + gbComponent + '' + gbComponent;    //"#ffffff";
-//  this.strokeStyle = 'green'; //'#' + gbComponent + 'ff' + gbComponent;    //"#ffffff";
+  this.strokeStyle = '#ffffff';
 
   this.postMove = this.wrapPostMove;
   this.collidesWith = ["bullet"];
+
+  this.computeStrokeStyle = function () {
+
+    // the color should fade from white to red as the energy decreases
+    var gbComponent = (parseInt(255 * this.energy / ENERGY_FULL)).toString(16);
+    //gbComponent = gbComponent.slice(0,-1); // remove trailing f
+    if (gbComponent.length < 2)
+      gbComponent = Array(2 - gbComponent.length + 1).join("0") + gbComponent;
+
+  //  if (gbComponent == '0')
+  //    gbComponent = '00';
+    this.strokeStyle = '#ff' + gbComponent + '' + gbComponent;    //"#ffffff";
+  //  this.strokeStyle = 'green'; //'#' + gbComponent + 'ff' + gbComponent;    //"#ffffff";
+  }
 
   this.draw = function () {
     if (!this.visible) return;
@@ -730,18 +801,63 @@ EnemyShip = function () {
   };
 
   this.collision = function (other) {
-    SFX.explosion();
+    SFX.explosion().play();
     Game.explosionAt(other.x, other.y);
-    this.fref.remove();
-    this.visible = false;
-    this.currentNode.leave(this);
-    this.currentNode = null;
-    //Game.lives--;
+//    console.log("enemy ship hit!");
+    // Commenting out the below allowed bullets to hit ships consistently in new code
+    //this.fref.remove();
+    //this.visible = false;
+    //this.currentNode.leave(this);
+    //this.currentNode = null;
+    ////Game.lives--;
   };
 
 };
 EnemyShip.prototype = new Sprite();
 
+
+Asteroid = function () {
+  this.init("asteroid",
+            [-10,   0,
+              -5,   7,
+              -3,   4,
+               1,  10,
+               5,   4,
+              10,   0,
+               5,  -6,
+               2, -10,
+              -4, -10,
+              -4,  -5]);
+
+  this.visible = true;
+  this.scale = 6;
+  this.postMove = this.wrapPostMove;
+
+  this.collidesWith = ["ship", "bullet", "bigalien", "alienbullet"];
+
+  this.collision = function (other) {
+    SFX.explosion().play();
+    if (other.name == "bullet") Game.score += 120 / this.scale;
+    this.scale /= 3;
+    if (this.scale > 0.5) {
+      // break into fragments
+      for (var i = 0; i < 3; i++) {
+        var roid = $.extend(true, {}, this);
+        roid.vel.x = Math.random() * 6 - 3;
+        roid.vel.y = Math.random() * 6 - 3;
+        if (Math.random() > 0.5) {
+          roid.points.reverse();
+        }
+        roid.vel.rot = Math.random() * 2 - 1;
+        roid.move(roid.scale * 3); // give them a little push
+        Game.sprites.push(roid);
+      }
+    }
+    Game.explosionAt(other.x, other.y);
+    this.die();
+  };
+};
+Asteroid.prototype = new Sprite();
 
 Bullet = function () {
   this.init("bullet", [0, 0]);
@@ -772,13 +888,15 @@ Bullet = function () {
     if (this.time > 50) {
       this.visible = false;
       this.time = 0;
-      this.fref.remove();
+      if ((typeof(this.fref) != 'unknown') && (this.fref != null))
+        this.fref.remove();
     }
   };
   this.collision = function (other) {
-    this.time = 0;
+//    console.log("bullet hit");
+    this.time = 0;    
     this.visible = false;
-    this.fref.remove();
+//TODO    this.fref.remove();
     this.currentNode.leave(this);
     this.currentNode = null;
     if (other.name == "enemyship") deltaScore(100);
@@ -823,6 +941,7 @@ EnemyBullet = function () {
     }
   };
   this.collision = function (other) {
+//    console.log("enemy bullet hit");
     this.time = 0;
     this.visible = false;
     this.currentNode.leave(this);
@@ -924,6 +1043,154 @@ GridNode = function () {
     return empty;
   };
 };
+
+
+BigAlien = function () {
+  this.init("bigalien",
+            [-20,   0,
+             -12,  -4,
+              12,  -4,
+              20,   0,
+              12,   4,
+             -12,   4,
+             -20,   0,
+              20,   0]);
+
+  this.children.top = new Sprite();
+  this.children.top.init("bigalien_top",
+                         [-8, -4,
+                          -6, -6,
+                           6, -6,
+                           8, -4]);
+  this.children.top.visible = true;
+
+  this.children.bottom = new Sprite();
+  this.children.bottom.init("bigalien_top",
+                            [ 8, 4,
+                              6, 6,
+                             -6, 6,
+                             -8, 4]);
+  this.children.bottom.visible = true;
+
+  this.collidesWith = ["asteroid", "ship", "bullet"];
+
+  this.bridgesH = false;
+
+  this.bullets = [];
+  this.bulletCounter = 0;
+
+  this.newPosition = function () {
+    if (Math.random() < 0.5) {
+      this.x = -20;
+      this.vel.x = 1.5;
+    } else {
+      this.x = Game.canvasWidth + 20;
+      this.vel.x = -1.5;
+    }
+    this.y = Math.random() * Game.canvasHeight;
+  };
+
+  this.setup = function () {
+    this.newPosition();
+
+    for (var i = 0; i < 3; i++) {
+      var bull = new AlienBullet();
+      this.bullets.push(bull);
+      Game.sprites.push(bull);
+    }
+  };
+
+  this.preMove = function (delta) {
+    var cn = this.currentNode;
+    if (cn == null) return;
+
+    var topCount = 0;
+    if (cn.north.nextSprite) topCount++;
+    if (cn.north.east.nextSprite) topCount++;
+    if (cn.north.west.nextSprite) topCount++;
+
+    var bottomCount = 0;
+    if (cn.south.nextSprite) bottomCount++;
+    if (cn.south.east.nextSprite) bottomCount++;
+    if (cn.south.west.nextSprite) bottomCount++;
+
+    if (topCount > bottomCount) {
+      this.vel.y = 1;
+    } else if (topCount < bottomCount) {
+      this.vel.y = -1;
+    } else if (Math.random() < 0.01) {
+      this.vel.y = -this.vel.y;
+    }
+
+    this.bulletCounter -= delta;
+    if (this.bulletCounter <= 0) {
+      this.bulletCounter = 22;
+      for (var i = 0; i < this.bullets.length; i++) {
+        if (!this.bullets[i].visible) {
+          bullet = this.bullets[i];
+          var rad = 2 * Math.PI * Math.random();
+          var vectorx = Math.cos(rad);
+          var vectory = Math.sin(rad);
+          bullet.x = this.x;
+          bullet.y = this.y;
+          bullet.vel.x = 6 * vectorx;
+          bullet.vel.y = 6 * vectory;
+          bullet.visible = true;
+          SFX.laser().play();
+          break;
+        }
+      }
+    }
+
+  };
+
+  BigAlien.prototype.collision = function (other) {
+    if (other.name == "bullet") Game.score += 200;
+    SFX.explosion().play();
+    Game.explosionAt(other.x, other.y);
+    //this.visible = false;
+    //this.newPosition();
+    //TODO: actually remove it instead of just making it hidden
+
+    this.die();
+    Game.bigAlienCount--;
+  };
+
+  this.postMove = function () {
+    if (this.y > Game.canvasHeight) {
+      this.y = 0;
+    } else if (this.y < 0) {
+      this.y = Game.canvasHeight;
+    }
+
+    if ((this.vel.x > 0 && this.x > Game.canvasWidth + 20) ||
+        (this.vel.x < 0 && this.x < -20)) {
+      // why did the alien cross the road?
+      this.visible = false;
+      this.newPosition();
+    }
+  }
+};
+BigAlien.prototype = new Sprite();
+
+
+AlienBullet = function () {
+  this.init("alienbullet");
+
+  this.draw = function () {
+    if (this.visible) {
+      this.context.save();
+      this.context.strokeStyle = "#FFFFFF";      
+      this.context.lineWidth = 2;
+      this.context.beginPath();
+      this.context.moveTo(this.x, this.y);
+      this.context.lineTo(this.x-this.vel.x, this.y-this.vel.y);
+      this.context.stroke();
+      this.context.restore();
+    }
+  };
+};
+AlienBullet.prototype = new Bullet();
 
 // borrowed from typeface-0.14.js
 // http://typeface.neocracy.org
@@ -1040,6 +1307,39 @@ Game = {
   sprites: [],
   ship: null,
 
+  bigAlienCount: 0,
+  nextBigAlienTime: null,
+
+
+  addBigAlien: function ()
+  {
+    var bigAlien = new BigAlien();
+    bigAlien.setup();
+    bigAlien.visible = true;
+    Game.sprites.push(bigAlien);
+    Game.bigAlienCount++;
+  },
+
+  spawnAsteroids: function (count) {
+    if (!count) count = this.totalAsteroids;
+    for (var i = 0; i < count; i++) {
+      var roid = new Asteroid();
+      roid.x = Math.random() * this.canvasWidth;
+      roid.y = Math.random() * this.canvasHeight;
+      while (!roid.isClear()) {
+        roid.x = Math.random() * this.canvasWidth;
+        roid.y = Math.random() * this.canvasHeight;
+      }
+      roid.vel.x = Math.random() * 4 - 2;
+      roid.vel.y = Math.random() * 4 - 2;
+      if (Math.random() > 0.5) {
+        roid.points.reverse();
+      }
+      roid.vel.rot = Math.random() * 2 - 1;
+      Game.sprites.push(roid);
+    }
+  },
+
   explosionAt: function (x, y) {
     var splosion = new Explosion();
     splosion.x = x;
@@ -1050,51 +1350,61 @@ Game = {
 
   FSM: {
     boot: function () {
-        KEY_STATUS.space = false; // hack so we don't shoot right away
-        window.gameStart = false;
-        this.state = 'start';
+      setScore(0);
+      Game.ship.energy = 0;
+      Text.renderText('Press any key to start', 30, 230, Game.canvasHeight/2 + 10);
     },
     start: function () {
+
+      // 'any key' shouldn't do anything
+      for (code in KEY_CODES) {
+        KEY_STATUS[KEY_CODES[code]] = false;
+      }
+
       for (sprite in Game.sprites) {
-        if (Game.sprites[sprite].name == 'asteroid') {
-          Game.sprites[sprite].die();
-        } else if (Game.sprites[sprite].name == 'bullet') {
+        if (Game.sprites[sprite].name == 'bullet') {
           Game.sprites[sprite].visible = false;
         }
       }
 
+//      Game.spawnAsteroids(1); //TODO: for now.  should move it to a key instead
+
       setScore(0);
       Game.lives = mmoac.l; 
+
+      Game.nextBigAlienTime = Date.now() + 30000 + (30000 * Math.random());
 
       this.state = 'spawn_ship';
     },
     spawn_ship: function () {
-      Game.ship.x = Math.floor(Game.canvasWidth / 2 * Math.random());
-      Game.ship.y = Math.floor(Game.canvasHeight / 2 * Math.random());
+      Game.ship.x = Math.floor(Game.canvasWidth * Math.random());
+      Game.ship.y = Math.floor(Game.canvasHeight* Math.random());
       if (Game.ship.isClear()) {
         Game.ship.rot = 0;
         Game.ship.vel.x = 0;
         Game.ship.vel.y = 0;
         Game.ship.energy = ENERGY_FULL;
+        Game.ship.prevenergy = Game.ship.energy;
         Game.ship.visible = true;
         this.state = 'run';
       }
     },
     run: function () {
-    },
-    new_level: function () {
-      if (this.timer == null) {
-        this.timer = Date.now();
-      }
-      // wait a second before spawning more asteroids
-      if (Date.now() - this.timer > 1000) {
-        this.timer = null;
-        this.state = 'run';
+          if (Date.now() > Game.nextBigAlienTime) {
+            // Uncomment whole block if we want to allow multiple aliens
+            /* //if (Game.bigAlienCount == 0) //Uncomment if  If we want to allow only one at a time
+            {
+              Game.addBigAlien();
+            } */
+            //Game.nextBigAlienTime = Date.now() + (30000 * Math.random());    
       }
     },
     player_died: function () {
       if (Game.lives < 0) {
         this.state = 'end_game';
+        Game.ship.energy = 0;
+        updateEnergy();
+
       } else {
         if (this.timer == null) {
           this.timer = Date.now();
@@ -1107,19 +1417,18 @@ Game = {
       }
     },
     end_game: function () {
-      Text.renderText('GAME OVER RESTARTING...', 50, 30, Game.canvasHeight/2 + 10);
+      Text.renderText('GAME OVER. Respawning...', 50, 30, Game.canvasHeight/2 + 10);
       if (this.timer == null) {
         this.timer = Date.now();
       }
       // wait 5 seconds then go back to start state
       if (Date.now() - this.timer > 5000) {
         this.timer = null;
-        this.state = 'start';
+        this.state = 'boot';
+
         var postScoreRef = scoreListRef.push();
         postScoreRef.setWithPriority({user: currentUser, score: Game.score}, Game.score);
       }
-
-      window.gameStart = false;
     },
 
     execute: function () {
@@ -1135,6 +1444,17 @@ $(function () {
   var canvas = $("#canvas");
   Game.canvasWidth  = canvas.width();
   Game.canvasHeight = canvas.height();
+
+  canvas.on('mousedown', function() {
+    KEY_STATUS.space = true;
+    if (Game.FSM.state == 'boot')
+    {
+      Game.FSM.state = 'start';
+    }
+  });
+  canvas.on('mouseup', function() {
+    KEY_STATUS.space = false;
+  });
 
   var context = canvas[0].getContext("2d");
 
@@ -1267,6 +1587,7 @@ $(function () {
       i++;
     }
 
+/*
     // extra dudes
     for (i = 0; i < Game.lives; i++) {
       context.save();
@@ -1276,7 +1597,7 @@ $(function () {
       extraDude.draw();
       context.restore();
     }
-
+*/
     frameCount++;
     elapsedCounter += elapsed;
     if (elapsedCounter > 1000) {
@@ -1284,8 +1605,14 @@ $(function () {
       avgFramerate = frameCount;
       frameCount = 0;
 
-      if (Game.ship.energy < ENERGY_FULL)
+
+      if ((Game.ship.energy < ENERGY_FULL) && (Game.lives >= 0))
+      {
         Game.ship.energy += ENERGY_REGEN;      
+        if (myship.energy > ((ENERGY_REGEN * 4) + myship.prevenergy)) // We reduce activity by not updating all regenerated energy
+          myship.set({ship: {acc: this.acc, vel: this.vel, x: this.x, y: this.y, rot: this.rot, accb: KEY_STATUS.up, energy: this.energy }, user: currentUser  });
+        updateEnergy();
+      }
     }
 
     requestAnimFrame(mainLoop, canvasNode);
@@ -1314,6 +1641,9 @@ $(function () {
   enemy.user = snapshot.val().user;
   enemy.energy = snapshot.val().ship.energy;
   enemy.fref = asteroids.child('players').child(snapshot.name());
+
+  enemy.computeStrokeStyle();
+
   if(typeof(enemy.user.photo) != undefined && enemy.user.photo != null) {
     enemy.eimg = new Image();
     enemy.eimg.src = enemy.user.photo;
@@ -1322,7 +1652,7 @@ $(function () {
     enemy.eimg = null;
   }
   Game.sprites[snapshot.name()] = enemy;
-    }
+  }
     else {
     }
   });
@@ -1335,11 +1665,14 @@ $(function () {
   enemy.vel = snapshot.val().ship.vel;
   enemy.x = snapshot.val().ship.x;
   enemy.y = snapshot.val().ship.y;
-  enemy.energy = snapshot.val().ship.energy
+  enemy.energy = snapshot.val().ship.energy;
   enemy.rot = snapshot.val().ship.rot;
   enemy.accb = snapshot.val().ship.accb;
   enemy.user = snapshot.val().user;
   enemy.fref = asteroids.child('players').child(snapshot.name());
+
+  enemy.computeStrokeStyle();
+
   if(typeof(enemy.user.photo) != undefined && enemy.user.photo != null) {
     enemy.eimg = new Image();
     enemy.eimg.src = enemy.user.photo;
@@ -1354,9 +1687,9 @@ $(function () {
 
   asteroids.child('players').on('child_removed', function(snapshot) {
     if(snapshot.name() != myship.name()) {
-  var enemy = Game.sprites[snapshot.name()];
-  enemy.visible = false;
-  delete Game.sprites[snapshot.name()];
+      var enemy = Game.sprites[snapshot.name()];
+      enemy.visible = false;
+      delete Game.sprites[snapshot.name()];
     }
     else {
       Game.ship.collision(null);

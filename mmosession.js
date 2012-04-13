@@ -31,20 +31,21 @@ _parseParams = function(paramString) {
 }
 
 
-// call this, passing in a JSON object that consists of session names, current number of users, and if it is private or not
-function _mmoSession(gameList) = {
+var mmoSession = {};
+// TODO call this, passing in a JSON object that consists of session names, current number of users, and if it is private or not
+var _mmoSession = function() {
 
-	this.Name = '';
+	this.Name = 'lobby';
 //	this.GameList = new Firebase(server + "/gamelist");
 
 	// will return the name of the session to connect to
 	this.OnInit = function()
 	{
-		var name = '';
+		var name = 'lobby'; // + Math.floor(Math.random() * 10);
 
 		if (window.location.hash != '')
 		{
-			name = window.location.substring(1);
+			name = window.location.hash.substring(1);
 		}
 
 		this.Name = name;
@@ -109,9 +110,9 @@ function _mmoSession(gameList) = {
 
 	}*/
 };
+_mmoSession.call(mmoSession);
 
-var MmoSession = _mmoSession();
-MmoSession.OnInit();
+mmoSession.OnInit();
 
 // session table:
 	// sessionid, capacity, isprivate

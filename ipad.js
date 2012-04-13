@@ -6,7 +6,7 @@ if (ipad) {
     $('body > *').hide();
     $('body').css('margin', '0px').css('background', 'black').prepend($('#game-container').remove());
     $('#game-container').width(1024).css('margin-top', 26).show();
-    $('#canvas').attr('width', 1020).attr('height', 660).css('background', 'white').css('margin', '0 1');
+    $('#canvas').attr('width', 1020).attr('height', 660).css('background', '#424547').css('margin', '0 1').css('background', 'url("stars.gif")');
 
     $('head').prepend($('<meta/>').attr('name', 'viewport').attr('content', 'width=device-width; height=device-height; initial-scale=1.0; maximum-scale=1.0; user-scalable=0;'));
 
@@ -25,6 +25,10 @@ if (ipad) {
 
     $(document).bind('touchstart', function (e) {
       window.gameStart = true;
+      if (Game.FSM.state == 'boot')
+      {
+        Game.FSM.state = 'start';
+      }
     });
 
     $(document).bind('gesturestart gesturechange gestureend touchstart touchmove touchend', function (e) {
