@@ -66,6 +66,12 @@ $(window).keydown(function (e) {
 }).keyup(function (e) {
   KEY_STATUS.keyDown = false;
   if (KEY_CODES[e.keyCode]) {
+    //console.log(e.keyCode);
+    if (e.keyCode == '38') //TODO: shouldn't hardcode this
+    {
+//      console.log("stopping...");
+//      SFX.thrust().finish(true);
+    }
     e.preventDefault();
     KEY_STATUS[KEY_CODES[e.keyCode]] = false;
   }
@@ -560,6 +566,14 @@ Ship = function () {
     if (KEY_STATUS.up) {
       if (this.energy > ENERGY_THRUST)
       {
+/*        console.log('0');
+        if (SFX.thrust().ended == true)   
+        {     
+          console.log('1');
+          console.log(SFX.thrust().paused);
+          SFX.thrust().play();
+        }*/
+
         var rad = ((this.rot-90) * Math.PI)/180;
         this.acc.x = 0.5 * Math.cos(rad);
         this.acc.y = 0.5 * Math.sin(rad);
@@ -593,6 +607,7 @@ Ship = function () {
     if (KEY_STATUS.q)
     {
       Game.FSM.state = 'player_died';
+      Game.explosionAt(Game.ship.x, Game.ship.y);
       Game.ship.visible = false;
       Game.lives--;
       //this.currentNode.leave(this);
@@ -611,6 +626,8 @@ Ship = function () {
     if (KEY_STATUS.z) { // warp
       if (this.energy > ENERGY_WARP)
       {
+        SFX.warp().play();
+
         KEY_STATUS.z = false;
         this.x = Math.floor(Game.canvasWidth * Math.random());
         this.y = Math.floor(Game.canvasHeight * Math.random());
@@ -1270,7 +1287,10 @@ Text = {
 
 SFX = {
   laser:     new Audio('39459__THE_bizniss__laser.wav'),
-  explosion: new Audio('51467__smcameron__missile_explosion.wav')
+  explosion: new Audio('51467__smcameron__missile_explosion.wav'),
+  warp: new Audio('Jump-SoundBible.com-1007297584.wav'), 
+  death: new Audio('Bomb_Exploding-Sound_Explorer-68256487.wav'), 
+  //  thrust: new Audio('Rocket Thrusters-SoundBible.com-1432176431.wav'),
 };
 
 // preload audio
@@ -1405,6 +1425,7 @@ Game = {
         this.state = 'end_game';
         Game.ship.energy = 0;
         updateEnergy();
+        SFX.death().play();
 
       } else {
         if (this.timer == null) {
@@ -1683,6 +1704,7 @@ $(function () {
       var enemy = Game.sprites[snapshot.name()];
       enemy.visible = false;
       delete Game.sprites[snapshot.name()];
+      SFX.death().play();
     }
     else {
       Game.ship.collision(null);
