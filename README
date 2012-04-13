@@ -1,7 +1,27 @@
 MMO Spacewar
 http://www.mmospacewar.com/
+Jared Sohn (jared.sohn at gmail.com), http://www.jaredsohn.com/
 
-A fork of mmoasteroids.com to make it behave more like the DOS version of Spacewar.
+A modification of MMO Asteroids (an actual MMO Asteroids (https://github.com/dmcinnes/HTML5-Asteroids) without the April Fools' joke (https://github.com/dmcinnes/HTML5-Asteroids), made possible thanks to a super awesome API (http://www.firebase.com/)) to make the rules more like the DOS version of Spacewar (http://www.youtube.com/watch?v=yY5qHe2VadA). We stand on the shoulders of giants...
 
-New features: warp (press 'z') and instead of instant death you have an energy which gets depleted by using thrust, colliding with other ships/bullets, and warping.
+You can now warp (by pressing 'z').
 
+So good that nobody can kill you? Then do it yourself to lock in your high score (press 'q').
+
+Sound now works! (disabled by default). Press 'm' to toggle.
+
+You don't die right after getting shot. Instead you have energy (shown in the upper right next to your score.)
+
+It costs energy to shoot, use thrust, warp, or if you collide with a bullet or other ships. You gain back energy slowly over time.
+
+Your opponents' ships become more red as their energy decreases.
+
+Once you die, you're done (and can see your score in the scoreboard). You only get one life.
+
+Ships now respawn at a random spot (instead of the top-left corner.) You must now press a key before respawning. No more camping. :)
+
+You can specify an instance by adding '#[instancename]' at the end of the URL. At the moment everyone gets thrown into the same instance automatically; balancing and listing instances to be added soon. Some other instance urls: Game 1 Game 2 Game 3 Game 4. All instances share a scoreboard.
+
+Wish MMO Asteroids had asteroids and alien ships? Press 'o' and 'p' to see them, or 'w' to kill them all at once. But for now they are your 'imaginary friends' since they aren't shared over the network. Others will wonder what you're shooting at. :)
+
+Yes, you can cheat, but please don't or if you do, do it in your own instance.
