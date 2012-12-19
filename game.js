@@ -23,7 +23,7 @@
 */
 
 // Updated to allow multiple players and renamed MMOAsteroids by @vikrum5000 of Firebase.
-// Made more Spacewar (DOS)-like, uses MMOSession for choosing an instance, and many bugs fixed by Jared Sohn (http://www.jaredsohn.com)
+// Made more Spacewar (DOS)-like, uses MMOInstance for choosing an instance, and many bugs fixed by Jared Sohn (http://www.jaredsohn.com)
 
 
 var ENERGY_FULL = 100;
@@ -81,9 +81,9 @@ GRID_SIZE = 60;
 
 var server = 'http://gamma.firebase.com/spacewar/';
 
-var namespace = mmoSession.Name;
+var namespace = mmoInstance.Name;
 var frefA = server + namespace;
-//TODO var frefA2 = server + 'space_' + MmoSession.Name;
+//TODO var frefA2 = server + 'space_' + mmoInstance.Name;
 
 var frefL = server + 'leaderboard';
 var frefGL = server + 'gamelist';
