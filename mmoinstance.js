@@ -74,7 +74,7 @@ var _mmoInstance = function() {
 			// Name not set. So should likely use a random name then
 		}
 
-
+		var dict = new Object();
 		if (questionIndex >= 0)
 		{
 			paramString = (window.location.href).substring(questionIndex + 1);
@@ -130,20 +130,20 @@ mmoInstance.OnInit();
 
 // firebase-specific functions; should go in separate file
 
-mmoInstance.ServerName = 'http://gamma.firebase.com';
-mmoInstance.RootFolder = 'spacewar';
+mmoInstance.ServerName = 'firebaseio.com';
+mmoInstance.YourFirebase = 'spacewar';
 mmoInstance.InstanceListName = 'games';
 mmoInstance.UserListName = 'users';
 
 mmoInstance.GetInstanceListFireBase = function()
 {
 	// Assumes that the firebase javascript has already been loaded
-	return new Firebase(mmoInstance.ServerName + '/' + mmoInstance.RootFolder + '/' + mmoInstance.InstanceList);
+	return new Firebase("http://" + mmoInstance.YourFirebase + "." + mmoInstance.ServerName + '/' + mmoInstance.InstanceList);
 }
 mmoInstance.GetUserListFireBase = function()
 {
 	// Assumes that the firebase javascript has already been loaded
-	return new Firebase(mmoInstance.ServerName + '/' + mmoInstance.RootFolder + '/' + mmoInstance.UserList);
+	return new Firebase("http://" + mmoInstance.YourFirebase + "." + mmoInstance.ServerName + '/' + mmoInstance.UserList);
 }
 
 
@@ -154,7 +154,7 @@ mmoInstance.GetUserListFireBase = function()
 mmoInstance.GetFirebaseTable = function(fireBaseObject)
 {
 	var infos = new Array();
-	fireBaseObject.once('value', function(snapshot)) {
+	fireBaseObject.once('value', function(snapshot) {
 		if (snapshot.val() == null)
 		{
 			// doesn't exist.
@@ -164,14 +164,14 @@ mmoInstance.GetFirebaseTable = function(fireBaseObject)
 		{
 			infos.add(snapshot.val());
 		}
-	}
+	});
 	return infos;
 }
 mmoInstance.AddFirebaseValue = function(fireBaseObject, value, mustBeUnique)
 {
-	fireBaseObject.push(value, function(success)) {
+	fireBaseObject.push(value, function(success) {
 		//TODO
-	}
+	});
 }
 /////////////////////////////////////////////////////////////////////////////////////
 

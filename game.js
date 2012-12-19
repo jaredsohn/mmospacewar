@@ -79,7 +79,7 @@ $(window).keydown(function (e) {
 
 GRID_SIZE = 60;
 
-var server = 'http://gamma.firebase.com/spacewar/';
+var server = 'http://spacewar.firebaseio.com/';
 
 var namespace = mmoInstance.Name;
 var frefA = server + namespace;
